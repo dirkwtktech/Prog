@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sonntagsfrage Sachsen-Anhalt</title>
+<meta name="description" content="Interaktives Balkendiagramm: Umfragewerte per Wischgeste verändern, Summe wird live gegen 100 % geprüft.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #f2f3f6;
+    --ground-2: #e6e8ee;
+    --surface: #ffffff;
+    --ink: #1b2140;
+    --ink-2: #4b5170;
+    --ink-3: #7c819a;
+    --line: #d5d8e2;
+    --bar-edge: transparent;
+    --good: #1a8f52;
+    --good-bg: #dff5e8;
+    --warn: #b86e00;
+    --warn-bg: #fdefd3;
+    --bad: #c9262c;
+    --bad-bg: #fbe0e1;
+    --focus: #2c6bd6;
+    --shadow: 0 1px 2px rgba(27,33,64,.08), 0 6px 18px rgba(27,33,64,.06);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #13151d;
+      --ground-2: #1a1d28;
+      --surface: #212532;
+      --ink: #eceef6;
+      --ink-2: #b4b8cb;
+      --ink-3: #7f849c;
+      --line: #343949;
+      --bar-edge: rgba(255,255,255,.16);
+      --good: #4fcf86;
+      --good-bg: #163526;
+      --warn: #f0b04a;
+      --warn-bg: #3a2b0e;
+      --bad: #ff6b6f;
+      --bad-bg: #3f1719;
+      --focus: #7aa7ff;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #13151d;
+    --ground-2: #1a1d28;
+    --surface: #212532;
+    --ink: #eceef6;
+    --ink-2: #b4b8cb;
+    --ink-3: #7f849c;
+    --line: #343949;
+    --bar-edge: rgba(255,255,255,.16);
+    --good: #4fcf86;
+    --good-bg: #163526;
+    --warn: #f0b04a;
+    --warn-bg: #3a2b0e;
+    --bad: #ff6b6f;
+    --bad-bg: #3f1719;
+    --focus: #7aa7ff;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: linear-gradient(180deg, var(--ground) 0%, var(--ground-2) 100%) fixed;
+    color: var(--ink);
+    font-family: "Barlow", "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.35;
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior-y: none;
+  }
+  .app {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: max(12px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+    gap: 12px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* Kopf */
+  .head { display: flex; flex-direction: column; gap: 2px; }
+  .head h1 {
+    margin: 0;
+    font-family: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+    font-weight: 800;
+    font-size: clamp(30px, 9vw, 48px);
+    line-height: .95;
+    letter-spacing: -.01em;
+    text-wrap: balance;
+  }
+  .head h1 small {
+    display: block;
+    font-size: .62em;
+    font-weight: 600;
+    color: var(--ink-2);
+  }
+  .head p {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .head p b { color: var(--ink); font-weight: 600; }
+
+  /* Summenanzeige */
+  .sum {
+    background: var(--surface);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 10px 12px 12px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 12px;
+    row-gap: 8px;
+    align-items: end;
+  }
+  .sum .total {
+    grid-row: 1;
+    font-family: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+    font-weight: 800;
+    font-size: 40px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .sum .total span { font-size: .55em; font-weight: 600; color: var(--ink-2); margin-left: 2px; }
+  .sum .status {
+    grid-row: 1;
+    justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .status::before {
+    content: "";
+    width: 8px; height: 8px; border-radius: 50%;
+    background: currentColor;
+    flex: none;
+  }
+  .sum[data-state="ok"]   .status { color: var(--good); background: var(--good-bg); }
+  .sum[data-state="low"]  .status { color: var(--warn); background: var(--warn-bg); }
+  .sum[data-state="high"] .status { color: var(--bad);  background: var(--bad-bg); }
+  .meter {
+    grid-column: 1 / -1;
+    position: relative;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--ground-2);
+  }
+  .meter .fill {
+    position: absolute; inset: 0 auto 0 0;
+    width: 0%;
+    border-radius: 999px;
+    background: var(--good);
+    transition: width .12s linear, background-color .2s;
+  }
+  .sum[data-state="low"]  .meter .fill { background: var(--warn); }
+  .sum[data-state="high"] .meter .fill { background: var(--bad); }
+  .meter .mark {
+    position: absolute; top: -2px; bottom: -2px;
+    width: 2px; left: calc(100% / 1.2 - 1px);
+    background: var(--ink);
+    opacity: .55;
+  }
+  .meter .mark::after {
+    content: "100 %";
+    position: absolute; top: 12px; left: -16px;
+    font-size: 10px; color: var(--ink-3); font-weight: 500;
+  }
+  .meter { margin-bottom: 14px; }
+
+  /* Diagramm */
+  .chart {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 300px;
+    background: var(--surface);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 12px 8px 8px;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .plot {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 4px;
+    align-items: stretch;
+    position: relative;
+    min-height: 220px;
+  }
+  .grid {
+    position: absolute; inset: 0;
+    pointer-events: none;
+  }
+  .grid div {
+    position: absolute; left: 0; right: 0;
+    border-top: 1px dashed var(--line);
+  }
+  .grid div span {
+    position: absolute; right: 2px; top: -14px;
+    font-size: 10px; color: var(--ink-3); font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .col {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    cursor: ns-resize;
+    border-radius: 6px;
+    outline: none;
+  }
+  .col:focus-visible { box-shadow: 0 0 0 2px var(--focus); }
+  .col.active { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+  .col .val {
+    font-family: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+    font-weight: 800;
+    font-size: clamp(13px, 3.9vw, 26px);
+    letter-spacing: -.02em;
+    line-height: 1;
+    text-align: center;
+    padding-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--ink);
+  }
+  .col .bar {
+    height: 0%;
+    min-height: 3px;
+    border-radius: 4px 4px 0 0;
+    background: var(--c);
+    background-image: linear-gradient(180deg, transparent 0 82%, rgba(0,0,0,.14) 100%);
+    box-shadow: inset 0 0 0 1px var(--bar-edge);
+    position: relative;
+  }
+  .col .bar::after {
+    /* Griff */
+    content: "";
+    position: absolute; top: 5px; left: 50%;
+    width: min(22px, 55%); height: 3px;
+    transform: translateX(-50%);
+    border-radius: 2px;
+    background: rgba(255,255,255,.55);
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .col.active .bar::after, .col:focus-visible .bar::after { opacity: 1; }
+  .labels {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .labels div {
+    text-align: center;
+    font-family: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+    font-weight: 600;
+    font-size: clamp(11px, 3.3vw, 20px);
+    line-height: 1.1;
+    padding: 6px 0;
+    color: var(--ink);
+    background: var(--ground);
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .labels .s { display: none; }
+  @media (max-width: 439px) {
+    .labels div[data-short] .l { display: none; }
+    .labels div[data-short] .s { display: inline; }
+  }
+
+  /* Bedienung */
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .actions button {
+    flex: 1 1 140px;
+    min-height: 44px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 0 14px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .actions button:active { transform: translateY(1px); }
+  .actions button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .foot {
+    font-size: 12px;
+    color: var(--ink-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+  .foot .hint { flex: 1 1 100%; color: var(--ink-2); }
+
+  @media (min-width: 640px) {
+    .app { padding-left: 24px; padding-right: 24px; }
+    .plot { gap: 10px; }
+    .labels { gap: 10px; }
+    .chart { padding: 16px 16px 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="head">
+    <h1>Sonntagsfrage <small>Sachsen-Anhalt</small></h1>
+    <p>Umfrage vom <b>1.–3.9.2026</b>, 1044 Befragte · Forschungsgruppe Wahlen für das ZDF-Politbarometer</p>
+  </header>
+
+  <section class="sum" id="sum" data-state="ok" aria-live="polite">
+    <div class="total"><span id="total">100</span><span>%</span></div>
+    <div class="status" id="status">Summe genau 100 %</div>
+    <div class="meter"><div class="fill" id="fill"></div><div class="mark"></div></div>
+  </section>
+
+  <section class="chart" aria-label="Balkendiagramm, Werte per Wischgeste veränderbar">
+    <div class="plot" id="plot"><div class="grid" id="grid"></div></div>
+    <div class="labels" id="labels"></div>
+  </section>
+
+  <div class="actions">
+    <button type="button" id="reset">Umfragewerte wiederherstellen</button>
+    <button type="button" id="norm">Auf 100 % normieren</button>
+  </div>
+
+  <footer class="foot">
+    <span class="hint">Finger auf eine Spalte legen und nach oben oder unten wischen. Mit Tastatur: Spalte fokussieren, Pfeiltasten ändern in 0,5 %-Schritten.</span>
+    <span>Quelle: Forschungsgruppe Wahlen für das ZDF-„Politbarometer“ (visual.BILD.de)</span>
+  </footer>
+</main>
+
+<script>
+(() => {
+  const PARTIES = [
+    { name: "CDU",      value: 23,   color: "#333333" },
+    { name: "AfD",      value: 41,   color: "#00a5e5" },
+    { name: "Linke",    value: 11.5, color: "#c9207e" },
+    { name: "SPD",      value: 8.5,  color: "#e3000f" },
+    { name: "FDP",      value: 3,    color: "#e2b307" },
+    { name: "Grüne",    value: 6,    color: "#3e9b32" },
+    { name: "BSW",      value: 4,    color: "#a3004d" },
+    { name: "Sonstige", value: 3,    color: "#8a8a8a", short: "Sonst." },
+  ];
+  const ORIGINAL = PARTIES.map(p => p.value);
+  const STEP = 0.5;
+  const MIN_SCALE = 50;
+
+  let values = ORIGINAL.slice();
+  let scaleMax = MIN_SCALE;
+
+  const plot = document.getElementById("plot");
+  const grid = document.getElementById("grid");
+  const labels = document.getElementById("labels");
+  const sumEl = document.getElementById("sum");
+  const totalEl = document.getElementById("total");
+  const statusEl = document.getElementById("status");
+  const fillEl = document.getElementById("fill");
+
+  const fmt = n => {
+    const r = Math.round(n * 10) / 10;
+    return (Number.isInteger(r) ? String(r) : r.toFixed(1)).replace(".", ",");
+  };
+  const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+  const snap = n => Math.round(n / STEP) * STEP;
+  const sum = () => values.reduce((a, b) => a + b, 0);
+
+  // Spalten aufbauen
+  const cols = PARTIES.map((p, i) => {
+    const col = document.createElement("div");
+    col.className = "col";
+    col.style.setProperty("--c", p.color);
+    col.tabIndex = 0;
+    col.setAttribute("role", "slider");
+    col.setAttribute("aria-label", p.name);
+    col.setAttribute("aria-valuemin", "0");
+    col.setAttribute("aria-valuemax", "100");
+    col.dataset.index = i;
+    col.innerHTML = `<div class="val"></div><div class="bar"></div>`;
+    plot.appendChild(col);
+
+    const lab = document.createElement("div");
+    lab.innerHTML = `<span class="l">${p.name}</span><span class="s">${p.short || p.name}</span>`;
+    if (p.short) lab.dataset.short = "1";
+    lab.title = p.name;
+    labels.appendChild(lab);
+    return col;
+  });
+
+  function neededScale() {
+    const m = Math.max(...values);
+    return Math.max(MIN_SCALE, Math.ceil((m * 1.08) / 10) * 10);
+  }
+
+  function renderGrid() {
+    grid.innerHTML = "";
+    const step = scaleMax <= 60 ? 10 : 20;
+    for (let v = step; v <= scaleMax; v += step) {
+      const line = document.createElement("div");
+      line.style.bottom = (v / scaleMax * 100) + "%";
+      line.innerHTML = `<span>${v} %</span>`;
+      grid.appendChild(line);
+    }
+  }
+
+  function render() {
+    cols.forEach((col, i) => {
+      const v = values[i];
+      col.querySelector(".val").textContent = fmt(v) + "\u202F%";
+      col.querySelector(".bar").style.height = clamp(v / scaleMax * 100, 0, 100) + "%";
+      col.setAttribute("aria-valuenow", v);
+      col.setAttribute("aria-valuetext", fmt(v) + " Prozent");
+    });
+    const s = Math.round(sum() * 10) / 10;
+    totalEl.textContent = fmt(s);
+    let state, text;
+    if (Math.abs(s - 100) < 0.05) { state = "ok"; text = "Summe genau 100 %"; }
+    else if (s < 100)             { state = "low"; text = `Es fehlen ${fmt(100 - s)} %`; }
+    else                          { state = "high"; text = `${fmt(s - 100)} % zu viel`; }
+    sumEl.dataset.state = state;
+    statusEl.textContent = text;
+    // Skala des Balkens: 120 % entsprechen voller Breite, 100 % liegt bei der Marke
+    fillEl.style.width = clamp(s / 120 * 100, 0, 100) + "%";
+  }
+
+  function setScale(next) {
+    if (next === scaleMax) return;
+    scaleMax = next;
+    renderGrid();
+  }
+
+  // Wischgeste (relativ zur Startposition, Skala während der Geste eingefroren)
+  let drag = null;
+  plot.addEventListener("pointerdown", e => {
+    const col = e.target.closest(".col");
+    if (!col || drag) return;
+    e.preventDefault();
+    const i = +col.dataset.index;
+    drag = {
+      id: e.pointerId, col, i,
+      startY: e.clientY,
+      startVal: values[i],
+      pxPerPct: plot.getBoundingClientRect().height / scaleMax
+    };
+    col.classList.add("active");
+    col.setPointerCapture(e.pointerId);
+  });
+  plot.addEventListener("pointermove", e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dy = drag.startY - e.clientY;
+    const v = clamp(snap(drag.startVal + dy / drag.pxPerPct), 0, 100);
+    if (v !== values[drag.i]) {
+      values[drag.i] = v;
+      if (v > scaleMax * 0.97 && scaleMax < 100) setScale(Math.min(100, scaleMax + 10));
+      render();
+    }
+  });
+  const endDrag = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    drag.col.classList.remove("active");
+    drag = null;
+    setScale(neededScale());
+    render();
+  };
+  plot.addEventListener("pointerup", endDrag);
+  plot.addEventListener("pointercancel", endDrag);
+
+  // Tastatur
+  plot.addEventListener("keydown", e => {
+    const col = e.target.closest(".col");
+    if (!col) return;
+    const i = +col.dataset.index;
+    let d = 0;
+    if (e.key === "ArrowUp" || e.key === "ArrowRight") d = STEP;
+    else if (e.key === "ArrowDown" || e.key === "ArrowLeft") d = -STEP;
+    else if (e.key === "PageUp") d = 5;
+    else if (e.key === "PageDown") d = -5;
+    else if (e.key === "Home") d = -values[i];
+    else return;
+    e.preventDefault();
+    values[i] = clamp(snap(values[i] + d), 0, 100);
+    setScale(neededScale());
+    render();
+  });
+
+  document.getElementById("reset").addEventListener("click", () => {
+    values = ORIGINAL.slice();
+    setScale(neededScale());
+    render();
+  });
+
+  document.getElementById("norm").addEventListener("click", () => {
+    const s = sum();
+    if (s <= 0) return;
+    values = values.map(v => snap(v / s * 100));
+    // Rundungsrest auf "Sonstige" legen, damit die Summe exakt 100 ergibt
+    const rest = Math.round((100 - sum()) * 10) / 10;
+    values[values.length - 1] = clamp(values[values.length - 1] + rest, 0, 100);
+    setScale(neededScale());
+    render();
+  });
+
+  renderGrid();
+  render();
+})();
+</script>
+</body>
+</html>
